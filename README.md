@@ -1,4 +1,3 @@
-README
 This Flask web application allows users to upload their designs (PNG format), position them on a base image, and download the resulting mockup.
 
 Features:
