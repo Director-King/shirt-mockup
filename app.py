@@ -1,18 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+#from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
 from PIL import Image
+from fpdf import FPDF
+import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a random secret key
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png'}
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 BASE_IMAGES = {
     'dress-shirt': {
@@ -38,50 +36,10 @@ BASE_IMAGES = {
     }
 }
 
-# This is a simple user model. In a real application, you'd use a database.
-class User(UserMixin):
-    def __init__(self, id, username, password):
-        self.id = id
-        self.username = username
-        self.password = password
-
-# This is a simple user database. In a real application, you'd use a real database.
-users = {
-    'user1': User('1', 'user1', generate_password_hash('password1')),
-    'user2': User('2', 'user2', generate_password_hash('password2'))
-}
-
-@login_manager.user_loader
-def load_user(user_id):
-    for user in users.values():
-        if user.id == user_id:
-            return user
-    return None
-
 #MAX_WIDTH = 105
 #MAX_HEIGHT = 72
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = users.get(username)
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('pricing_calculator'))
-        else:
-            return render_template('login.html', error='Invalid username or password')
-    return render_template('login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
 @app.route('/pricing', methods=['GET', 'POST'])
-@login_required
 def pricing_calculator():
     if request.method == 'POST':
         printing_type = request.form['printing_type']
@@ -117,6 +75,11 @@ def calculate_digital_price(size, sided, paper_type, copies):
         'A4': 19 if sided == '1' else 38,
         'A3': 38 if sided == '1' else 75
     }
+
+    if paper_type == 'Photocopy paper':
+        if size != 'A4':
+            return 'Error: Photocopy paper is only available in A4 size'
+        return (5 if sided == '1' else 7) * copies
     
     if paper_type in ['Art/Matt 250gsm', 'Art/Matt 300gsm']:
         base_price = {k: v + 2 for k, v in base_price.items()}
@@ -206,6 +169,57 @@ def upload_file():
             download_url = url_for('static', filename='uploads/' + 'full_' + filename)
 
     return render_template('index.html', file_url=file_url, download_url=download_url, base_images=BASE_IMAGES)
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        try:
+            # Process the form data
+            request_type = request.form['request_type']
+            name = request.form['name']
+            email = request.form['email']
+            phone = request.form['phone']
+            
+            # Create a PDF report
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            
+            pdf.cell(200, 10, txt="Contact Form Submission", ln=True, align='C')
+            pdf.cell(200, 10, txt=f"Name: {name}", ln=True)
+            pdf.cell(200, 10, txt=f"Email: {email}", ln=True)
+            pdf.cell(200, 10, txt=f"Phone: {phone}", ln=True)
+            pdf.cell(200, 10, txt=f"Request Type: {request_type}", ln=True)
+            
+            if request_type == 'Bulk order':
+                # Add bulk order details
+                printing_type = request.form['printing_type']
+                pdf.cell(200, 10, txt=f"Printing Type: {printing_type}", ln=True)
+                if printing_type == 'digital':
+                    pdf.cell(200, 10, txt=f"Size: {request.form['size']}", ln=True)
+                    pdf.cell(200, 10, txt=f"Sided: {request.form['sided']}", ln=True)
+                    pdf.cell(200, 10, txt=f"Paper Type: {request.form['paper_type']}", ln=True)
+                    pdf.cell(200, 10, txt=f"Copies: {request.form['copies']}", ln=True)
+                elif printing_type == 'no_cut':
+                    pdf.cell(200, 10, txt=f"Cloth Type: {request.form['cloth_type']}", ln=True)
+                    pdf.cell(200, 10, txt=f"Quantity: {request.form['quantity']}", ln=True)
+            elif request_type == 'Custom mockup':
+                pdf.cell(200, 10, txt=f"Item to be branded: {request.form['item_to_brand']}", ln=True)
+            elif request_type == 'Inquiry':
+                pdf.multi_cell(0, 10, txt=f"Inquiry: {request.form['inquiry']}")
+            
+            # Save the PDF
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            pdf_filename = f"submission_{timestamp}.pdf"
+            pdf_path = os.path.join(app.root_path, 'static/submissions', pdf_filename)
+            pdf.output(pdf_path)
+            
+            return jsonify({"success": True, "message": "Your form has been submitted. We will contact you soon."})
+        except Exception as e:
+            print(f"Error processing form: {str(e)}")
+            return jsonify({"success": False, "message": "There was an error processing your form. Please try again."})
+    
+    return render_template('contact.html')
 
 if __name__ == "__main__":
     os.makedirs(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']), exist_ok=True)

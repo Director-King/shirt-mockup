@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Contact Us</h2>
+
+    <form id="contactForm">
+        <div class="form-group">
+            <label for="requestType">Type of Request:</label>
+            <select class="form-control" id="requestType" name="request_type" required>
+                <option value="">Select a request type</option>
+                <option value="Bulk order">Bulk order</option>
+                <option value="Custom mockup">Custom mockup</option>
+                <option value="Inquiry">Inquiry</option>
+            </select>
+        </div>
+
+        <div id="bulkOrderForm" style="display: none;">
+            <!-- Add form fields similar to pricing_calculator.html -->
+            <!-- Set minimum quantity to 500 for digital and 50 for no cut -->
+        </div>
+
+        <div id="customMockupForm" style="display: none;">
+            <div class="form-group">
+                <label for="artwork">Artwork:</label>
+                <input type="file" id="artwork" name="artwork" class="form-control-file">
+            </div>
+            <div class="form-group">
+                <label for="itemToBrand">Item to be branded:</label>
+                <input type="text" id="itemToBrand" name="item_to_brand" class="form-control" required>
+            </div>
+        </div>
+
+        <div id="inquiryForm" style="display: none;">
+            <div class="form-group">
+                <label for="inquiry">Inquiry:</label>
+                <textarea id="inquiry" name="inquiry" class="form-control" rows="4" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <div id="submissionNote" class="mt-3" style="display: none;">
+        <p>We will contact you soon addressing your inquiries. Mockups will be sent to your email in case you don't have
+            a WhatsApp account.</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('requestType').addEventListener('change', function () {
+        var bulkOrderForm = document.getElementById('bulkOrderForm');
+        var customMockupForm = document.getElementById('customMockupForm');
+        var inquiryForm = document.getElementById('inquiryForm');
+
+        bulkOrderForm.style.display = 'none';
+        customMockupForm.style.display = 'none';
+        inquiryForm.style.display = 'none';
+
+        if (this.value === 'Bulk order') {
+            bulkOrderForm.style.display = 'block';
+        } else if (this.value === 'Custom mockup') {
+            customMockupForm.style.display = 'block';
+        } else if (this.value === 'Inquiry') {
+            inquiryForm.style.display = 'block';
+        }
+    });
+
+    document.getElementById('contactForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var formData = new FormData(this);
+
+        fetch('/contact', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById('submissionNote').style.display = 'block';
+                    this.reset();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+    });
+</script>
+{% endblock %}

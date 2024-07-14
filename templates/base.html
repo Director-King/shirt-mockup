@@ -19,7 +19,7 @@
 
 <body>
 
-    <div class="content-wrapper" style="padding-top: 100px;">
+    <div class="content-wrapper" style="padding-top: 50px;" style="padding-bottom: 100px;">
         {% block content %}
         <!-- The specific content of each page will go here -->
         {% endblock %}
@@ -30,7 +30,7 @@
                 <div class="col text-center">
                     <a href="{{ url_for('upload_file') }}" class="btn btn-link">Home</a>
                     <a href="{{ url_for('pricing_calculator') }}" class="btn btn-link">Price Calculator</a>
-                    <a href="{{ url_for('logout') }}" class="btn btn-link">Logout</a>
+                    <a href="{{ url_for('contact') }}" class="btn btn-link">Contact Us</a>
                 </div>
             </div>
         </div>
