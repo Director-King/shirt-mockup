@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -45,7 +45,7 @@ def login():
         user = users.get(username)
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for('upload_file'))
+            return redirect(url_for('pricing_calculator'))
         else:
             return render_template('login.html', error='Invalid username or password')
     return render_template('login.html')
@@ -55,6 +55,58 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/pricing', methods=['GET', 'POST'])
+@login_required
+def pricing_calculator():
+    if request.method == 'POST':
+        printing_type = request.form['printing_type']
+        
+        if printing_type == 'digital':
+            size = request.form['size']
+            sided = request.form['sided']
+            paper_type = request.form['paper_type']
+            copies = int(request.form['copies'])
+            
+            # Perform digital printing price calculation
+            price = calculate_digital_price(size, sided, paper_type, copies)
+            
+            return jsonify({'price': price})
+        
+        elif printing_type == 'no_cut':
+            cloth_type = request.form['cloth_type']
+            quantity = int(request.form['quantity'])
+            
+            # Perform no-cut printing price calculation
+            price = calculate_no_cut_price(cloth_type, quantity)
+            
+            return jsonify({'price': price})
+    
+    return render_template('pricing_calculator.html')
+
+def calculate_digital_price(size, sided, paper_type, copies):
+    # Implement the pricing logic based on the provided calculations
+    # This is a simplified version, you'll need to expand it
+    base_price = {
+        'A6': 5 if sided == '1' else 9,
+        'A5': 10 if sided == '1' else 19,
+        'A4': 19 if sided == '1' else 38,
+        'A3': 38 if sided == '1' else 75
+    }
+    
+    if paper_type in ['Art/Matt 250gsm', 'Art/Matt 300gsm']:
+        base_price = {k: v + 2 for k, v in base_price.items()}
+    
+    return base_price[size] * copies
+
+def calculate_no_cut_price(cloth_type, quantity):
+    base_price = 120
+    if cloth_type == 'Corporate shirt':
+        return (base_price + 1200) * quantity
+    elif cloth_type == 'Round-neck shirt':
+        return (base_price + 350) * quantity
+    elif cloth_type == 'Polo-shirt':
+        return (base_price + 450) * quantity
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']

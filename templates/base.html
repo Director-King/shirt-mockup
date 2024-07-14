@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Printing Firm{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% include '_navbar.html' %}
+
+    <div class="content-wrapper" style="padding-top: 100px;">
+        {% block content %}
+        <!-- The specific content of each page will go here -->
+        {% endblock %}
+    </div>
+
+    {% block extra_body %}{% endblock %}
+</body>
+</html>
