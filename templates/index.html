@@ -1,73 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Design Uploads</title>
-    <link rel="stylesheet" href="static/vendors/mdi/css/materialdesignicons.min.css">
-    <link rel="stylesheet" href="static/vendors/css/vendor.bundle.base.css">
-    <link rel="stylesheet" href="static/css/style.css">
-    <link rel="shortcut icon" href="static/images/favicon.png" />
-</head>
-<body>
-    {% include '_navbar.html' %}
-    <div class="content-wrapper" style="padding-top: 100px;">
-        <h1>Upload Your Design</h1>
-        <form action="/" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="fileInput">Choose a PNG file:</label>
-                <br>
-                <div class="input-group-append">
-                    <input type="file" name="file" id="fileInput" accept=".png">
-                </div>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <h1>Upload Your Design</h1>
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Choose a PNG file:</label>
+            <input type="file" class="form-control-file" id="file" name="file" accept=".png" required>
+        </div>
+
+        <div class="preview-container mt-4"></div>
+
+        <div class="form-group">
+            <label for="base_image">Select Base Image:</label>
+            <select class="dropdown form-control" id="base_image" name="base_image">
+                {% for key, value in base_images.items() %}
+                <option value="{{ key }}">{{ key.replace('-', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group row">
+            <label for="width" class="col-sm-3 col-form-label">Width (inches):</label>
+            <div class="col-sm-9">
+                <input type="number" class="form-control" id="width" name="width" step="0.01" required>
             </div>
-            <div class="preview-container"></div>
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label" for="width">Width (inches):</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" id="width" name="width" step="0.01" required min="0.01" max="99.99" placeholder="Width">
-                </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="height" class="col-sm-3 col-form-label">Height (inches):</label>
+            <div class="col-sm-9">
+                <input type="number" class="form-control" id="height" name="height" step="0.01" required>
             </div>
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label" for="height">Height (inches):</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" id="height" name="height" step="0.01" required min="0.01" max="99.99" placeholder="Height">
-                </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="x" class="col-sm-3 col-form-label">X Position (inches):</label>
+            <div class="col-sm-9">
+                <input type="number" class="form-control" id="x" name="x" step="0.01" required>
             </div>
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label" for="x">X Position (inches):</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" id="x" name="x" step="0.01" required min="0" max="99.99" value="6.22" placeholder="X Position">
-                </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="y" class="col-sm-3 col-form-label">Y Position (inches):</label>
+            <div class="col-sm-9">
+                <input type="number" class="form-control" id="y" name="y" step="0.01" required>
             </div>
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label" for="y">Y Position (inches):</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" id="y" name="y" step="0.01" required min="0" max="99.99" value="3.35" placeholder="Y Position">
-                </div>
-            </div>
-            <input type="hidden" id="originalWidth" name="originalWidth">
-            <input type="hidden" id="originalHeight" name="originalHeight">
-            <button type="submit" class="btn btn-success btn-rounded btn-fw">
-                <i class="mdi mdi-upload btn-icon-prepend"></i>Upload and Process
-            </button>
-        </form>
-    </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Upload and Process</button>
+    </form>
+
     {% if file_url %}
-    <h2>Processed Design:</h2>
-    <div class="card-body">
+    <div class="mt-4">
+        <h2>Processed Design:</h2>
         <img src="{{ file_url }}" alt="Processed Design" style="max-width: 300px; max-height: 300px;">
-        <br>
-        <a href="{{ download_url }}" download="mockup.png" class="btn btn-primary btn-rounded btn-fw">
-            <i class="mdi mdi-download btn-icon-prepend"></i>Download Full Size
-        </a>
     </div>
-    {% endif %}
-    
-    <script src="static/js/script.js"></script>
+    <a href="{{ download_url }}" class="btn btn-success mt-2" download="mockup.png">Download Full Size</a>
+    <p><em>Note: Contact us for a specific mockup.</em></p>
+</div>
+{% endif %}
+</div>
 
-    <script src="static/vendors/js/vendor.bundle.base.js"></script>
+<script>
+    // Correctly parse the JSON data passed from Flask
+    const baseImages = JSON.parse('{{ base_images | tojson | safe }}');
 
-    
-</body>
-</html>
+    const baseImageSelect = document.getElementById('base_image');
+    const xInput = document.getElementById('x');
+    const yInput = document.getElementById('y');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+
+    function updateInputs() {
+        const selectedImage = baseImages[baseImageSelect.value];
+        xInput.value = selectedImage.default_x;
+        yInput.value = selectedImage.default_y;
+        widthInput.value = selectedImage.max_width;
+        heightInput.value = selectedImage.max_height;
+    }
+
+    baseImageSelect.addEventListener('change', updateInputs);
+
+    // Set initial values
+    updateInputs();
+</script>
+{% endblock %}

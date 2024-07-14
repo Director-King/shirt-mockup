@@ -14,6 +14,30 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+BASE_IMAGES = {
+    'dress-shirt': {
+        'file': 'base_image.png',
+        'max_width': 105,
+        'max_height': 72,
+        'default_x': 597.1,
+        'default_y': 321.6
+    },
+    't-shirt': {
+        'file': 't-shirt.png',
+        'max_width': 27.3,
+        'max_height': 19,
+        'default_x': 201,
+        'default_y': 105
+    },
+    'polo-shirt': {
+        'file': 'polo-shirt.png',
+        'max_width': 43.1,
+        'max_height': 31.1,
+        'default_x': 350,
+        'default_y': 180
+    }
+}
+
 # This is a simple user model. In a real application, you'd use a database.
 class User(UserMixin):
     def __init__(self, id, username, password):
@@ -34,8 +58,8 @@ def load_user(user_id):
             return user
     return None
 
-MAX_WIDTH = 105
-MAX_HEIGHT = 72
+#MAX_WIDTH = 105
+#MAX_HEIGHT = 72
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -116,11 +140,11 @@ def resize_image(image, max_width, max_height):
     aspect_ratio = width / height
 
     if width > max_width:
-        width = max_width
+        width = int(max_width)
         height = int(width / aspect_ratio)
 
     if height > max_height:
-        height = max_height
+        height = int(max_height)
         width = int(height * aspect_ratio)
 
     return image.resize((width, height), Image.LANCZOS)
@@ -142,20 +166,20 @@ def upload_file():
             file.save(file_path)
 
             # Get dimensions and position from form
-            width = int(request.form['width'])
-            height = int(request.form['height'])
-            x = int(request.form['x'])
-            y = int(request.form['y'])
-            original_width = int(request.form['originalWidth'])
-            original_height = int(request.form['originalHeight'])
+            width = float(request.form['width'])
+            height = float(request.form['height'])
+            x = float(request.form['x'])
+            y = float(request.form['y'])
+            base_image_key = request.form['base_image']
+            base_image_info = BASE_IMAGES[base_image_key]
 
             # Load the base image and the uploaded design
-            base_image_path = os.path.join(app.root_path, 'static/base_image.png')
+            base_image_path = os.path.join(app.root_path, 'static', base_image_info['file'])
             base_image = Image.open(base_image_path).convert("RGBA")
             uploaded_design = Image.open(file_path).convert("RGBA")
 
-            # Resize the uploaded design to fit within MAX_WIDTH x MAX_HEIGHT while maintaining aspect ratio
-            uploaded_design = resize_image(uploaded_design, MAX_WIDTH, MAX_HEIGHT)
+            # Resize the uploaded design to fit within max_width x max_height while maintaining aspect ratio
+            uploaded_design = resize_image(uploaded_design, base_image_info['max_width'], base_image_info['max_height'])
             
             # Create a new image with the same size as the base image
             combined_image = Image.new("RGBA", base_image.size)
@@ -164,7 +188,7 @@ def upload_file():
             combined_image.paste(base_image, (0, 0))
             
             # Paste the uploaded design at the specified position
-            combined_image.paste(uploaded_design, (x, y), uploaded_design)
+            combined_image.paste(uploaded_design, (int(x), int(y)), uploaded_design)
 
             # Save full-size image for download
             full_size_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], 'full_' + filename)
@@ -181,7 +205,7 @@ def upload_file():
             file_url = url_for('static', filename='uploads/' + 'thumb_' + filename)
             download_url = url_for('static', filename='uploads/' + 'full_' + filename)
 
-    return render_template('index.html', file_url=file_url, download_url=download_url)
+    return render_template('index.html', file_url=file_url, download_url=download_url, base_images=BASE_IMAGES)
 
 if __name__ == "__main__":
     os.makedirs(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']), exist_ok=True)

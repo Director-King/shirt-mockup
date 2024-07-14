@@ -1,22 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Printing Firm{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Design Uploads</title>
+    <link rel="stylesheet" href="static/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="static/vendors/css/vendor.bundle.base.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="shortcut icon" href="static/images/favicon.png" />
     {% block extra_head %}{% endblock %}
 </head>
+
 <body>
-    {% include '_navbar.html' %}
 
     <div class="content-wrapper" style="padding-top: 100px;">
         {% block content %}
         <!-- The specific content of each page will go here -->
         {% endblock %}
     </div>
+    <footer class="footer mt-auto py-3 bg-dark">
+        <div class="container">
+            <div class="row">
+                <div class="col text-center">
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-link">Home</a>
+                    <a href="{{ url_for('pricing_calculator') }}" class="btn btn-link">Price Calculator</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-link">Logout</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     {% block extra_body %}{% endblock %}
+
 </body>
+
 </html>

@@ -5,10 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const heightInput = document.getElementById('height');
     const originalWidthInput = document.getElementById('originalWidth');
     const originalHeightInput = document.getElementById('originalHeight');
+    const baseImageSelect = document.getElementById('baseImage');
 
     const PIXELS_PER_INCH = 96;
-    const MAX_WIDTH = 105;
-    const MAX_HEIGHT = 72;
 
     function inchesToPixels(inches) {
         return Math.round(inches * PIXELS_PER_INCH);
@@ -75,7 +74,11 @@ document.addEventListener('DOMContentLoaded', function () {
             reader.onload = function (e) {
                 const img = new Image();
                 img.onload = function() {
-                    const resizedDimensions = resizeImage(img, MAX_WIDTH, MAX_HEIGHT);
+                    const baseImageInfo = BASE_IMAGES[baseImageSelect.value];
+                    const maxWidth = baseImageInfo.max_width;
+                    const maxHeight = baseImageInfo.max_height;
+                    
+                    const resizedDimensions = resizeImage(img, inchesToPixels(maxWidth), inchesToPixels(maxHeight));
                     
                     const canvas = document.createElement('canvas');
                     canvas.width = resizedDimensions.width;
@@ -97,6 +100,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     widthInput.value = pixelsToInches(resizedDimensions.width);
                     heightInput.value = pixelsToInches(resizedDimensions.height);
                     
+                    // Set default position
+                    document.getElementById('x').value = baseImageInfo.default_x;
+                    document.getElementById('y').value = baseImageInfo.default_y;
+                    
                     // Store original dimensions
                     originalWidthInput.value = img.width;
                     originalHeightInput.value = img.height;
@@ -107,6 +114,15 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             alert('Only PNG files are allowed!');
             fileInput.value = '';
+        }
+    });
+
+    // Add event listener for base image selection
+    baseImageSelect.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            // Trigger the file input change event to update the preview
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
         }
     });
 });
